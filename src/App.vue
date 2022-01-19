@@ -5,22 +5,30 @@ const countries = ref([]);
 const filteredCountries = ref([]);
 const capitalSearchText = ref("");
 const searchText = ref("");
-
+const loading = ref(true);
 const onKeyupAll = () => {
   let data;
+
   if (!searchText.value.length) {
     data = countries.value;
   } else {
     data = countries.value.filter((item) => {
+      let arr = JSON.parse(JSON.stringify(item));
       if (!item.capital) item.capital = "";
-      return (
-        item.capital.toLowerCase().includes(searchText.value.toLowerCase()) ||
-        item.name.toLowerCase().includes(searchText.value.toLowerCase()) ||
-        item.region.toLowerCase().includes(searchText.value.toLocaleLowerCase())
+      return Object.keys(arr).some(
+        (key) =>
+          typeof item[key] === "string" &&
+          item[key]
+            .toLocaleLowerCase("tr-TR")
+            .includes(searchText.value.toLocaleLowerCase("tr-TR"))
       );
     });
   }
   filteredCountries.value = data;
+  console.log(
+    "filtered data : ",
+    JSON.parse(JSON.stringify(filteredCountries.value))
+  );
 };
 const onKeyupCapital = () => {
   let data;
@@ -30,8 +38,8 @@ const onKeyupCapital = () => {
     data = countries.value.filter((item) => {
       if (!item.capital) item.capital = "";
       return item.capital
-        .toLowerCase()
-        .includes(capitalSearchText.value.toLowerCase());
+        .toLocaleLowerCase("tr-TR")
+        .includes(capitalSearchText.value.toLocaleLowerCase("tr-TR"));
     });
   }
   filteredCountries.value = data;
@@ -39,8 +47,14 @@ const onKeyupCapital = () => {
 onMounted(async () => {
   await axios
     .get("https://restcountries.com/v2/all")
-    .then((res) => (countries.value = res.data))
-    .catch((e) => console.error(e));
+    .then((res) => {
+      countries.value = res.data;
+      loading.value = false;
+    })
+    .catch((e) => console.error(e))
+    .finally(() => {
+      loading.value = false;
+    });
   filteredCountries.value = countries.value;
 });
 </script>
@@ -68,7 +82,10 @@ onMounted(async () => {
         class="form-control d-inline ms-4"
       />
     </div>
-    <table class="table table-hover table-light table-striped w-50 rounded">
+    <table
+      v-if="!loading"
+      class="table table-hover table-light table-striped w-50 rounded"
+    >
       <thead class="bg-white">
         <th>Name</th>
         <th>Capital</th>
@@ -91,6 +108,11 @@ onMounted(async () => {
         </tr>
       </tbody>
     </table>
+    <div class="w-full d-flex justify-content-center py-5" v-else>
+      <div class="spinner-grow text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
   </div>
 </template>
 <style></style>
