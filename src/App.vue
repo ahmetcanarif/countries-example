@@ -15,13 +15,27 @@ const onKeyupAll = () => {
     data = countries.value.filter((item) => {
       let arr = JSON.parse(JSON.stringify(item));
       if (!item.capital) item.capital = "";
-      return Object.keys(arr).some(
-        (key) =>
-          typeof item[key] === "string" &&
-          item[key]
+      return Object.keys(arr).some((key) => {
+        if (typeof item[key] === "string") {
+          return item[key]
+            .toString()
             .toLocaleLowerCase("tr-TR")
-            .includes(searchText.value.toLocaleLowerCase("tr-TR"))
-      );
+            .includes(searchText.value.toLocaleLowerCase("tr-TR"));
+        }
+        if (typeof item[key] === "number") {
+          return item[key].toString().includes(searchText.value);
+        }
+        if (typeof item[key] == "object") {
+          return Object.values(
+            JSON.parse(JSON.stringify(Object.values(item[key])))[0]
+          ).includes(searchText.value);
+        }
+        if (Array.isArray(item[key])) {
+          return JSON.parse(JSON.stringify(item[key])).includes(
+            searchText.value
+          );
+        }
+      });
     });
   }
   filteredCountries.value = data;
